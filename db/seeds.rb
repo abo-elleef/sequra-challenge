@@ -28416,3 +28416,4 @@ merchants = [
 Merchant.upsert_all(merchants)
 Shopper.upsert_all(shoppers)
 Order.upsert_all(orders)
+CalculateMerchantsSisbursementsJob.new.perform
