@@ -1,22 +1,19 @@
 class CalculateMerchantsSisbursementsJob < ApplicationJob
 
-  def perform(date:)
-    grouped_disbursements = Order.where.not(completed_at: nil)
-      .group(:merchant_id, "date_trunc('week',completed_at)").sum(:amount)
-    disbursements = grouped_disbursements.map do |key, value|
+  def perform(date = nil)
+    scope = Order.where.not(completed_at: nil)
+    scope = scope.where("completed_at > ?", date.beginning_of_week) if date.present?
+    scope = scope.group(:merchant_id, "date_trunc('week',completed_at)").sum(:amount) 
+    disbursements = scope.map do |key, value|
       {
         merchant_id: key[0], due_to: key[1],
         merchant_part: marchent_part(value), sequra_part: sequra_part(value)
       }
     end
     Disbursement.upsert_all(disbursements)
-    # TODO: retries 
-    # TODO: RAM issues
   end
 
-
-  private 
-
+  private
   def sequra_part(value)
     value * sequra_percentag(value)
   end
